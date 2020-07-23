@@ -14,21 +14,23 @@
 ## 🏭 Works
 * [RSSMagick](https://rssmagick-4tjc37sqda-uc.a.run.app/)
   * RSSMagick provides some ways to customize RSS.
-  * Technology Factors
+  * Factors
     * Ruby
     * Sinatra
     * Docker
     * Google Cloud Run
 * [Flutter Icon Search](https://flutter-icon-search.web.app/#/)
   * Incremental search form for Flutter icons.
-  * Technology Factors
+  * Factors
     * Flutter (Web)
     * Firebase Hosting
-* [zeero/ruby-swifty_enum: Enum for Ruby with Swift style.](https://github.com/zeero/ruby-swifty_enum)
-  * Technology Factors
+* [zeero/ruby-swifty_enum](https://github.com/zeero/ruby-swifty_enum)
+  * Enum for Ruby with Swift style.
+  * Factors
     * Ruby
-* [zeero/vim-ctrlp-help: CtrlP extension for vim help keywords.](https://github.com/zeero/vim-ctrlp-help)
-  * Technology Factors
+* [zeero/vim-ctrlp-help](https://github.com/zeero/vim-ctrlp-help)
+  * CtrlP extension for vim help keywords.
+  * Factors
     * Vim Script
     * CtrlP
 
