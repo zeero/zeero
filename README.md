@@ -2,6 +2,7 @@
 
 ## ♥ Interests
 * Swift & iOS
+* Flutter
 * Ruby
 * Vim & Vim Script
 
