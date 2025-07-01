@@ -1,0 +1,47 @@
+name: Gemini Slack Summary
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  summarize-slack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Run Gemini Slack Summary
+        uses: google-gemini/gemini-cli-action@main
+        env:
+          SLACK_MCP_XOXC_TOKEN: ${{ secrets.SLACK_MCP_XOXC_TOKEN }}
+          SLACK_MCP_XOXD_TOKEN: ${{ secrets.SLACK_MCP_XOXD_TOKEN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          settings_json: |
+            {
+              "mcpServers": {
+                "slack": {
+                  "command": "npx",
+                  "args": ["-y", "slack-mcp-server@latest", "--transport", "stdio"],
+                  "env": {
+                    "SLACK_MCP_XOXC_TOKEN": "$SLACK_MCP_XOXC_TOKEN",
+                    "SLACK_MCP_XOXD_TOKEN": "$SLACK_MCP_XOXD_TOKEN"
+                  }
+                }
+              },
+              "coreTools": [
+                "slack__conversations_history",
+                "run_shell_command(curl)"
+              ]
+            }
+          prompt: |
+            You are a Slack summarization assistant.
+            1. Use `slack__conversations_history` to fetch the last day's messages from $SLACK_CHANNEL_ID.
+            2. Identify the main discussion topics and any frequently shared links.
+            3. Summarize the findings in a short paragraph and bullet list of popular articles.
+            4. Post the summary back to Slack using `run_shell_command` to call the Slack Web API:
+               `curl -X POST -H 'Authorization: Bearer $SLACK_BOT_TOKEN' -H 'Content-Type: application/json' \
+               --data '{"channel":"$SLACK_CHANNEL_ID","text":"<summary>"}' https://slack.com/api/chat.postMessage`
