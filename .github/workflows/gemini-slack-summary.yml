@@ -14,8 +14,7 @@ jobs:
       - name: Run Gemini Slack Summary
         uses: google-gemini/gemini-cli-action@main
         env:
-          SLACK_MCP_XOXC_TOKEN: ${{ secrets.SLACK_MCP_XOXC_TOKEN }}
-          SLACK_MCP_XOXD_TOKEN: ${{ secrets.SLACK_MCP_XOXD_TOKEN }}
+          SLACK_MCP_XOXP_TOKEN: ${{ secrets.SLACK_MCP_XOXP_TOKEN }}
         with:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           settings_json: |
@@ -25,8 +24,7 @@ jobs:
                   "command": "npx",
                   "args": ["-y", "slack-mcp-server@latest", "--transport", "stdio"],
                   "env": {
-                    "SLACK_MCP_XOXC_TOKEN": "$SLACK_MCP_XOXC_TOKEN",
-                    "SLACK_MCP_XOXD_TOKEN": "$SLACK_MCP_XOXD_TOKEN"
+                    "SLACK_MCP_XOXP_TOKEN": "$SLACK_MCP_XOXP_TOKEN"
                   }
                 }
               },
