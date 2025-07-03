@@ -36,10 +36,10 @@ jobs:
               ]
             }
           prompt: |
-            You are a Slack summarization assistant.
-            1. Use `slack__conversations_history` to fetch the last day's messages from ${{ secrets.SLACK_CHANNEL_ID }}.
-            2. Identify the main discussion topics and any frequently shared links.
-            3. Summarize the findings in a short paragraph and bullet list of popular articles.
-            4. Post the summary back to Slack using `run_shell_command` to call the incoming webhook:
+            あなたは Slack の要約アシスタントです。
+            1. `slack__conversations_history` を使う際は、使用するパラメータ (`channel_id`, `limit`, `include_activity_messages` など) を標準出力に表示してから、${{ secrets.SLACK_CHANNEL_ID }} から過去1日のメッセージを取得してください。
+            2. 主な議論のトピックと頻繁に共有されたリンクを特定してください。
+            3. 見つかった内容を短い段落と人気記事の箇条書きでまとめてください。
+            4. `run_shell_command` を用いて次の incoming webhook を呼び出し、要約を Slack に投稿します:
                `curl -X POST -H 'Content-Type: application/json' \
                --data '{"text":"<summary>"}' ${{ secrets.SLACK_WEBHOOK_URL }}`
