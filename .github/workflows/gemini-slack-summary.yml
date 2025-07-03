@@ -14,7 +14,9 @@ jobs:
       - name: Run Gemini Slack Summary
         uses: google-gemini/gemini-cli-action@main
         env:
-          SLACK_MCP_XOXP_TOKEN: ${{ secrets.SLACK_MCP_XOXP_TOKEN }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
         with:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           settings_json: |
@@ -22,20 +24,21 @@ jobs:
               "mcpServers": {
                 "slack": {
                   "command": "npx",
-                  "args": ["-y", "slack-mcp-server@latest", "--transport", "stdio"],
+                  "args": ["-y", "@modelcontextprotocol/server-slack"],
                   "env": {
-                    "SLACK_MCP_XOXP_TOKEN": "$SLACK_MCP_XOXP_TOKEN"
+                    "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
+                    "SLACK_TEAM_ID": "$SLACK_TEAM_ID"
                   }
                 }
               },
               "coreTools": [
-                "slack__conversations_history",
+                "mcp__slack__slack_get_channel_history",
                 "run_shell_command(curl)"
               ]
             }
           prompt: |
             あなたは Slack の要約アシスタントです。
-            1. `slack__conversations_history` を使う際は、使用するパラメータ (`channel_id`, `limit`, `include_activity_messages` など) を標準出力に表示してから、${{ secrets.SLACK_CHANNEL_ID }} から直近10件のメッセージを取得してください。
+            1. ${{ secrets.SLACK_CHANNEL_ID }} から日本時間で昨日分のメッセージを取得してください。
             2. 主な議論のトピックと頻繁に共有されたリンクを特定してください。
             3. 見つかった内容を短い段落と人気記事の箇条書きでまとめてください。
             4. `run_shell_command` を用いて次の incoming webhook を呼び出し、要約を Slack に投稿します:
