@@ -41,6 +41,7 @@ jobs:
             1. ${{ secrets.SLACK_CHANNEL_ID }} から日本時間で昨日分のメッセージを取得してください。
             2. 主な議論のトピックと頻繁に共有されたリンクを特定してください。
             3. 見つかった内容を短い段落と人気記事の箇条書きでまとめてください。
-            4. `run_shell_command` を用いて次の incoming webhook を呼び出し、要約を Slack に投稿します:
+            4. リンクを含める場合は Slack のリンク形式 `<URL|リンクテキスト>` を使用してください。
+            5. `run_shell_command` を用いて次の incoming webhook を呼び出し、要約を Slack に投稿します:
                `curl -X POST -H 'Content-Type: application/json' \
                --data '{"text":"<summary>"}' ${{ secrets.SLACK_WEBHOOK_URL }}`
