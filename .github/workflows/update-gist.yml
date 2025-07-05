@@ -22,8 +22,8 @@ jobs:
 
       - name: Authenticate gh
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: echo "$GITHUB_TOKEN" | gh auth login --with-token
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: echo "$GH_TOKEN" | gh auth login --with-token
 
       - name: Update gist
         env:
