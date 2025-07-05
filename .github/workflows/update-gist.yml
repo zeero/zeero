@@ -21,9 +21,7 @@ jobs:
         run: pandoc guidelines.html -f html -t gfm -o guidelines.md
 
       - name: Authenticate gh
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: echo "$GH_TOKEN" | gh auth login --with-token
+        run: echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
 
       - name: Update gist
         env:
