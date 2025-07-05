@@ -34,7 +34,7 @@ jobs:
               ]
             }
           prompt: |
-            Slack のチャンネル `#rss-apple` から直近24時間のメッセージを取得し、"update guidelines" というガイドライン更新のお知らせがあるか確認してください。もし見つかったら
+            Slack のチャンネル `#rss-apple` から直近24時間のメッセージを取得し、"update guidelines" などガイドライン更新のお知らせがあるか確認してください。もし見つかったら
             `echo "GUIDELINES_UPDATE_FOUND=true" >> $GITHUB_ENV`
             を実行し、見つからなければ
             `echo "GUIDELINES_UPDATE_FOUND=false" >> $GITHUB_ENV`
