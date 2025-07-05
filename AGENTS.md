@@ -4,7 +4,7 @@
 
 ## GitHub ワークフロー
 
-リポジトリには二つのワークフローがあり、どちらも **google-gemini/gemini-cli-action** を利用しています。
+リポジトリには三つのワークフローがあり、いずれも **google-gemini/gemini-cli-action** を利用しています。
 
 ### Gemini Slack Summary
 - [`gemini-slack-summary.yml`](.github/workflows/gemini-slack-summary.yml) に定義
@@ -12,6 +12,12 @@
 - `SLACK_BOT_TOKEN`、`SLACK_TEAM_ID`、`GEMINI_API_KEY` を設定して `google-gemini/gemini-cli-action@main` を呼び出す
 - `settings_json` で MCP の Slack サーバーを起動し `mcp__slack__slack_get_channel_history` を利用
 - `#rss-tech_blog` `#rss-hotentry` `#rss-ai` `#rss-ios` のメッセージを要約し `#general` に投稿
+
+### Gemini Bluesky Summary
+- [`gemini-bluesky-summary.yml`](.github/workflows/gemini-bluesky-summary.yml) に定義
+- 毎日と `workflow_dispatch` で実行
+- Slack サーバーを起動した上で `curl` を使い、Bluesky ページ `https://bsky.app/profile/did:plc:a3vurmxtfdiehvyefas744uc/feed/aaalzlquduqha` を取得
+- ページから昨日投稿された内容をいいね数の多い順に抽出し、メッセージ本文をそのまま `#general` に投稿
 
 ### Update App Store Review Guidelines Gist
 - [`update-gist.yml`](.github/workflows/update-gist.yml) に定義
