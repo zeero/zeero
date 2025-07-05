@@ -36,11 +36,11 @@ jobs:
                 "run_shell_command(curl)"
               ]
             }
-          prompt: >-
+          prompt: |
             あなたは Bluesky 投稿のまとめアシスタントです。
             `curl -sL
             https://bsky.app/profile/did:plc:a3vurmxtfdiehvyefas744uc/feed/aaalzlquduqha`
             を実行し、HTML を取得してください。
-            1. 日本時間の昨日投稿されたメッセージを抽出してください。
-            2. いいね数が多い順に上位5件を選び、各メッセージ本文といいね数をそのまま列挙してください。要約は不要です。
+            1. 直近24時間に投稿されたメッセージを抽出してください。
+            2. いいね数が多いものやiOS開発者に有益なメッセージを選び、重要度順に各メッセージ本文といいね数をそのまま列挙してください。要約は不要です。
             3. 結果を Slack の `#general` チャンネルに投稿します。
