@@ -9,22 +9,62 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
+      - name: Check guidelines update via Gemini
+        uses: google-gemini/gemini-cli-action@main
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          settings_json: |
+            {
+              "mcpServers": {
+                "slack": {
+                  "command": "npx",
+                  "args": ["-y", "@modelcontextprotocol/server-slack"],
+                  "env": {
+                    "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
+                    "SLACK_TEAM_ID": "$SLACK_TEAM_ID"
+                  }
+                }
+              },
+              "coreTools": [
+                "mcp__slack__slack_get_channel_history",
+                "run_shell_command(echo)"
+              ]
+            }
+          prompt: |
+            Slack のチャンネル `#rss-apple` から直近24時間のメッセージを取得し、"update guidelines" というガイドライン更新のお知らせがあるか確認してください。もし見つかったら
+            `echo "GUIDELINES_UPDATE_FOUND=true" >> $GITHUB_ENV`
+            を実行し、見つからなければ
+            `echo "GUIDELINES_UPDATE_FOUND=false" >> $GITHUB_ENV`
+            を実行してください。
+
       - name: Install pandoc and GitHub CLI
+        if: env.GUIDELINES_UPDATE_FOUND == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y pandoc gh
 
       - name: Fetch review guidelines
+        if: env.GUIDELINES_UPDATE_FOUND == 'true'
         run: curl -L https://developer.apple.com/app-store/review/guidelines/ -o guidelines.html
 
       - name: Convert HTML to Markdown
+        if: env.GUIDELINES_UPDATE_FOUND == 'true'
         run: pandoc guidelines.html -f html -t gfm -o guidelines.md
 
       - name: Authenticate gh
+        if: env.GUIDELINES_UPDATE_FOUND == 'true'
         run: echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
 
       - name: Update gist
+        if: env.GUIDELINES_UPDATE_FOUND == 'true'
         env:
           GIST_ID: ${{ secrets.GIST_ID }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: gh gist edit "$GIST_ID" guidelines.md
+
+      - name: No update found
+        if: env.GUIDELINES_UPDATE_FOUND != 'true'
+        run: echo 'No guidelines update notice found. Workflow completed.'
