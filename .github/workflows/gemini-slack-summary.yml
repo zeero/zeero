@@ -18,7 +18,6 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
         with:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           settings_json: |
@@ -39,7 +38,8 @@ jobs:
             }
           prompt: |
             あなたは Slack の要約アシスタントです。
-            1. ${{ secrets.SLACK_CHANNEL_ID }} から日本時間で昨日分のメッセージを取得してください。
+            Slackのチャンネル `#rss-ios` `#rss-ai` `#rss-tech_blog` について、以下の処理を繰り返してください。
+            1. 日本時間の昨日の間に投稿されたメッセージを取得してください。
             2. 重要なトピックと頻繁に共有されたリンクを特定してください。
             3. 見つかった内容を短い段落と人気記事の箇条書きでまとめてください。特に重要と思われる記事には100文字程度のサマリをつけてください。
             4. リンクを含める場合は Slack のリンク形式 `<URL|リンクテキスト>` を使用してください。
