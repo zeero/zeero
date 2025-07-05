@@ -18,6 +18,9 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
+          BLUESKY_IDENTIFIER: ${{ secrets.BLUESKY_IDENTIFIER }}
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+          BLUESKY_SERVICE_URL: ${{ secrets.BLUESKY_SERVICE_URL }}
         with:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           settings_json: |
@@ -30,17 +33,25 @@ jobs:
                     "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
                     "SLACK_TEAM_ID": "$SLACK_TEAM_ID"
                   }
+                },
+                "bluesky": {
+                  "command": "npx",
+                  "args": ["-y", "@smithery/cli", "start", "@brianellin/bsky-mcp-server"],
+                  "env": {
+                    "BLUESKY_IDENTIFIER": "$BLUESKY_IDENTIFIER",
+                    "BLUESKY_APP_PASSWORD": "$BLUESKY_APP_PASSWORD",
+                    "BLUESKY_SERVICE_URL": "$BLUESKY_SERVICE_URL"
+                  }
                 }
               },
               "coreTools": [
-                "run_shell_command(curl)"
+                "mcp__bluesky__get_feed_posts"
               ]
             }
           prompt: |
             あなたは Bluesky 投稿のまとめアシスタントです。
-            `curl -sL
-            https://bsky.app/profile/did:plc:a3vurmxtfdiehvyefas744uc/feed/aaalzlquduqha`
-            を実行し、HTML を取得してください。
+            `mcp__bluesky__get_feed_posts` ツールを使い、
+            フィード URI `at://did:plc:a3vurmxtfdiehvyefas744uc/app.bsky.feed.generator/aaalzlquduqha` から投稿を取得してください。
             1. 直近24時間に投稿されたメッセージを抽出してください。
-            2. いいね数が多いものやiOS開発者に有益なメッセージを選び、重要度順に各メッセージ本文といいね数をそのまま列挙してください。要約は不要です。
+            2. いいね数が多いものや iOS 開発者に有益なメッセージを選び、重要度順に各メッセージ本文といいね数をそのまま列挙してください。要約は不要です。
             3. 結果を Slack の `#general` チャンネルに投稿します。
