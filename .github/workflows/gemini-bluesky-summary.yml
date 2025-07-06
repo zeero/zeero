@@ -13,6 +13,19 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - name: Install pnpm if needed
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            npm install -g pnpm
+          fi
+      - name: Install Bluesky MCP server
+        run: |
+          git clone https://github.com/brianellin/bsky-mcp-server.git
+          cd bsky-mcp-server
+          pnpm install
+          pnpm run build
+          echo "BLSKY_MCP_PATH=$PWD/build/src/index.js" >> $GITHUB_ENV
+
       - name: Run Gemini Bluesky Summary
         uses: google-gemini/gemini-cli-action@main
         env:
@@ -21,6 +34,7 @@ jobs:
           BLUESKY_IDENTIFIER: ${{ secrets.BLUESKY_IDENTIFIER }}
           BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
           BLUESKY_SERVICE_URL: ${{ secrets.BLUESKY_SERVICE_URL }}
+          BLSKY_MCP_PATH: ${{ env.BLSKY_MCP_PATH }}
         with:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           settings_json: |
@@ -35,8 +49,8 @@ jobs:
                   }
                 },
                 "bluesky": {
-                  "command": "npx",
-                  "args": ["-y", "@smithery/cli", "start", "@brianellin/bsky-mcp-server"],
+                  "command": "node",
+                  "args": ["$BLSKY_MCP_PATH"],
                   "env": {
                     "BLUESKY_IDENTIFIER": "$BLUESKY_IDENTIFIER",
                     "BLUESKY_APP_PASSWORD": "$BLUESKY_APP_PASSWORD",
