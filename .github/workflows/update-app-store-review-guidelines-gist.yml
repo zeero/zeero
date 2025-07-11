@@ -9,62 +9,65 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - name: Check guidelines update via Gemini
-        uses: google-gemini/gemini-cli-action@main
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
+      - name: Restore previous hash from cache
+        uses: actions/cache@v4
         with:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          settings_json: |
-            {
-              "mcpServers": {
-                "slack": {
-                  "command": "npx",
-                  "args": ["-y", "@modelcontextprotocol/server-slack"],
-                  "env": {
-                    "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
-                    "SLACK_TEAM_ID": "$SLACK_TEAM_ID"
-                  }
-                }
-              },
-              "coreTools": [
-                "mcp__slack__slack_get_channel_history",
-                "run_shell_command(echo)"
-              ]
-            }
-          prompt: |
-            Slack のチャンネル `#rss-apple` から直近24時間のメッセージを取得し、"update guidelines" などガイドライン更新のお知らせがあるか確認してください。もし見つかったら
-            `echo "GUIDELINES_UPDATE_FOUND=true" >> $GITHUB_ENV`
-            を実行し、見つからなければ
-            `echo "GUIDELINES_UPDATE_FOUND=false" >> $GITHUB_ENV`
-            を実行してください。
+          path: previous-hash.txt
+          key: guidelines-hash-${{ github.run_id }}
+          restore-keys: |
+            guidelines-hash-
+
+      - name: Fetch current guidelines
+        run: curl -L https://developer.apple.com/app-store/review/guidelines/ -o guidelines.html
+
+      - name: Calculate current hash
+        run: |
+          sha256sum guidelines.html | cut -d' ' -f1 > current-hash.txt
+          echo "CURRENT_HASH=$(cat current-hash.txt)" >> $GITHUB_ENV
+
+      - name: Check if guidelines changed
+        run: |
+          if [ -f previous-hash.txt ]; then
+            PREVIOUS_HASH=$(cat previous-hash.txt)
+            echo "Previous hash: $PREVIOUS_HASH"
+            echo "Current hash: ${{ env.CURRENT_HASH }}"
+            if [ "$PREVIOUS_HASH" != "${{ env.CURRENT_HASH }}" ]; then
+              echo "GUIDELINES_CHANGED=true" >> $GITHUB_ENV
+              echo "Guidelines have changed!"
+            else
+              echo "GUIDELINES_CHANGED=false" >> $GITHUB_ENV
+              echo "No changes detected."
+            fi
+          else
+            echo "GUIDELINES_CHANGED=true" >> $GITHUB_ENV
+            echo "No previous hash found. Treating as new guidelines."
+          fi
 
       - name: Install pandoc and GitHub CLI
-        if: env.GUIDELINES_UPDATE_FOUND == 'true'
+        if: env.GUIDELINES_CHANGED == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y pandoc gh
 
-      - name: Fetch review guidelines
-        if: env.GUIDELINES_UPDATE_FOUND == 'true'
-        run: curl -L https://developer.apple.com/app-store/review/guidelines/ -o guidelines.html
-
       - name: Convert HTML to Markdown
-        if: env.GUIDELINES_UPDATE_FOUND == 'true'
+        if: env.GUIDELINES_CHANGED == 'true'
         run: pandoc guidelines.html -f html -t gfm -o guidelines.md
 
       - name: Authenticate gh
-        if: env.GUIDELINES_UPDATE_FOUND == 'true'
+        if: env.GUIDELINES_CHANGED == 'true'
         run: echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
 
       - name: Update gist
-        if: env.GUIDELINES_UPDATE_FOUND == 'true'
+        if: env.GUIDELINES_CHANGED == 'true'
         env:
           GIST_ID: ${{ secrets.GIST_ID }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: gh gist edit "$GIST_ID" guidelines.md
 
-      - name: No update found
-        if: env.GUIDELINES_UPDATE_FOUND != 'true'
-        run: echo 'No guidelines update notice found. Workflow completed.'
+      - name: Save current hash for next run
+        if: env.GUIDELINES_CHANGED == 'true'
+        run: cp current-hash.txt previous-hash.txt
+
+      - name: No update needed
+        if: env.GUIDELINES_CHANGED != 'true'
+        run: echo 'No guidelines changes detected. Workflow completed.'
