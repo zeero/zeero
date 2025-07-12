@@ -32,7 +32,7 @@ jobs:
           
           # Qiita ページから HTML を取得し、Contribution 数を抽出
           HTML=$(curl -s https://qiita.com/zeero)
-          CURRENT_COUNT=$(echo "$HTML" | grep -o 'Contribution</span><span[^>]*>[0-9]*' | grep -o '[0-9]*$' | head -1)
+          CURRENT_COUNT=$(echo "$HTML" | grep 'meta.*content.*Contribution:' | grep -o 'Contribution: [0-9]*' | grep -o '[0-9]*')
           
           # Contribution 数が取得できない場合はエラー
           if [ -z "$CURRENT_COUNT" ]; then
