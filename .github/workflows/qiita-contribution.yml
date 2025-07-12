@@ -1,0 +1,62 @@
+name: Qiita Contribution Notifier
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 23 * * *'
+
+jobs:
+  check-contribution:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Restore cache
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: cache
+          key: qiita-contribution-${{ github.run_id }}
+          restore-keys: |
+            qiita-contribution-
+      - name: Run Gemini to check Qiita contributions
+        uses: google-gemini/gemini-cli-action@main
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          settings_json: |
+            {
+              "mcpServers": {
+                "slack": {
+                  "command": "npx",
+                  "args": ["-y", "@modelcontextprotocol/server-slack"],
+                  "env": {
+                    "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
+                    "SLACK_TEAM_ID": "$SLACK_TEAM_ID"
+                  }
+                }
+              },
+              "coreTools": [
+                "run_shell_command(curl)",
+                "run_shell_command(cat)",
+                "run_shell_command(echo)"
+              ]
+            }
+          prompt: |
+            あなたは GitHub Actions で実行されるアシスタントです。
+            1. `cat cache/contribution.txt` を実行し、前回の Contribution 数を取得します。ファイルがなければ 0 を使用します。
+            2. `curl -s https://qiita.com/zeero` を実行して HTML を取得してください。
+            3. HTML から現在の Contribution 数を抽出し、整数で取得してください。
+            4. 前回値との差分を計算し、正のときは Slack の `#general` チャンネルに「Contribution数が${DIFF}増加しました」と投稿してください。
+            5. 現在の Contribution 数を `contribution.txt` に書き出してください。
+            6. 最後に Contribution 数のみを出力してください。
+      - name: Save result to cache
+        run: |
+          mkdir -p cache
+          if [ -f contribution.txt ]; then
+            mv contribution.txt cache/contribution.txt
+          fi
