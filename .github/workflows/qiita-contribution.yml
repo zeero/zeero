@@ -21,39 +21,44 @@ jobs:
           key: qiita-contribution-${{ github.run_id }}
           restore-keys: |
             qiita-contribution-
-      - name: Run Gemini to check Qiita contributions
-        uses: google-gemini/gemini-cli-action@main
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
-        with:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          settings_json: |
-            {
-              "mcpServers": {
-                "slack": {
-                  "command": "npx",
-                  "args": ["-y", "@modelcontextprotocol/server-slack"],
-                  "env": {
-                    "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
-                    "SLACK_TEAM_ID": "$SLACK_TEAM_ID"
-                  }
-                }
-              },
-              "coreTools": [
-                "run_shell_command(curl)",
-                "run_shell_command(cat)",
-                "run_shell_command(echo)"
-              ]
-            }
-          prompt: |
-            あなたは GitHub Actions で実行されるアシスタントです。
-            1. `cat cache/contribution.txt` を実行し、前回の Contribution 数を取得します。ファイルがなければ 0 を使用します。
-            2. `curl -s https://qiita.com/zeero` を実行して HTML を取得してください。
-            3. HTML から現在の Contribution 数を抽出し、整数で取得してください。
-            4. 前回値との差分を計算し、正のときは Slack の `#general` チャンネルに「Contribution数が${DIFF}増加しました」と投稿してください。
-            5. 現在の Contribution 数を `contribution.txt` に書き出してください。
-            6. 最後に Contribution 数のみを出力してください。
+      - name: Check Qiita contributions
+        run: |
+          # 前回の Contribution 数を取得
+          PREV_COUNT=0
+          if [ -f cache/contribution.txt ]; then
+            PREV_COUNT=$(cat cache/contribution.txt)
+          fi
+          echo "Previous contribution count: $PREV_COUNT"
+          
+          # Qiita ページから HTML を取得し、Contribution 数を抽出
+          HTML=$(curl -s https://qiita.com/zeero)
+          CURRENT_COUNT=$(echo "$HTML" | grep -o 'Contribution</span><span[^>]*>[0-9]*' | grep -o '[0-9]*$' | head -1)
+          
+          # Contribution 数が取得できない場合はエラー
+          if [ -z "$CURRENT_COUNT" ]; then
+            echo "Error: Could not extract contribution count"
+            exit 1
+          fi
+          
+          echo "Current contribution count: $CURRENT_COUNT"
+          
+          # 差分を計算
+          DIFF=$((CURRENT_COUNT - PREV_COUNT))
+          echo "Difference: $DIFF"
+          
+          # 増加があった場合は Slack に投稿
+          if [ $DIFF -gt 0 ]; then
+            MESSAGE="Contribution数が${DIFF}増加しました"
+            curl -X POST https://slack.com/api/chat.postMessage \
+              -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"channel\":\"#general\",\"text\":\"$MESSAGE\"}"
+            echo "Posted to Slack: $MESSAGE"
+          fi
+          
+          # 現在の Contribution 数をファイルに保存
+          echo "$CURRENT_COUNT" > contribution.txt
+          echo "Saved current count to file"
       - name: Save result to cache
         run: |
           mkdir -p cache
