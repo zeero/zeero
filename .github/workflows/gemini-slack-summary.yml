@@ -33,7 +33,6 @@ jobs:
                   }
                 }
               },
-              "autoAccept": true,
               "coreTools": [
                 "mcp__slack__slack_get_channel_history"
               ]
