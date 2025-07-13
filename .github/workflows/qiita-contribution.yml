@@ -3,7 +3,7 @@ name: Qiita Contribution Notifier
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '45 7,22 * * *'
+    - cron: '45 */3 * * *'
 
 jobs:
   check-contribution:
