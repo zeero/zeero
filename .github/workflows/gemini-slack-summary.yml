@@ -21,7 +21,6 @@ jobs:
           GEMINI_MODEL: "gemini-2.0-flash-lite"
         with:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          autoAccept: true
           settings_json: |
             {
               "mcpServers": {
@@ -34,6 +33,7 @@ jobs:
                   }
                 }
               },
+              "autoAccept": true,
               "coreTools": [
                 "mcp__slack__slack_get_channel_history"
               ]
