@@ -63,3 +63,9 @@ gh workflow run update-app-store-review-guidelines-gist.yml
 - Slack 連携ワークフローでは Gemini API の制限とコスト効率を考慮してプロンプトを最適化
 - MCP サーバーの起動パラメータは settings_json 内で定義
 - App Store Guidelines ワークフローはハッシュ比較による変更検知で API コストを削減
+
+## コミュニケーション
+
+- 受け答えは日本語で行う
+  - 途中の思考は英語でもOK
+- 各文の末尾に感情を表す絵文字をつけてください
