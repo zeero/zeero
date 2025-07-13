@@ -18,8 +18,10 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
+          GEMINI_MODEL: "gemini-2.0-flash-lite"
         with:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          autoAccept: true
           settings_json: |
             {
               "mcpServers": {
