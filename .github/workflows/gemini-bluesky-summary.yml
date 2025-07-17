@@ -64,6 +64,7 @@ jobs:
             }
           prompt: |
             あなたは Bluesky 投稿のまとめアシスタントです。
+            この処理は定期実行しているためユーザへの確認は不要です。
             `mcp__bluesky__get_feed_posts` ツールを使い、
             フィード URI `at://did:plc:a3vurmxtfdiehvyefas744uc/app.bsky.feed.generator/aaalzlquduqha` から投稿を取得してください。
             1. 直近24時間に投稿されたメッセージを抽出してください。
