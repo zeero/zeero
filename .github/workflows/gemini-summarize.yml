@@ -1,0 +1,43 @@
+name: Gemini Summarize
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: 'タイトル'
+        required: true
+        type: string
+      message:
+        description: '要約したいメッセージ'
+        required: true
+        type: string
+
+jobs:
+  summarize-message:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Run Gemini Message Summary
+        uses: google-gemini/gemini-cli-action@main
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          prompt: |
+            あなたは要約アシスタントです。
+            以下のメッセージを要約してください。
+
+            タイトル: ${{ inputs.title }}
+            メッセージ: ${{ inputs.message }}
+
+            以下の形式で出力してください：
+            ## 要約: [タイトル]
+            
+            ### 主要なポイント
+            - ポイント1
+            - ポイント2
+            - ポイント3 (必要に応じて)
+            
+            ### 詳細要約
+            [2-3文で内容をまとめた詳細な要約]
