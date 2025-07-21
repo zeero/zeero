@@ -1,0 +1,18 @@
+name: Summarize
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        required: false
+        default: 'Title'
+      message:
+        required: true
+        default: 'Message'
+
+jobs:
+  echo_message:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo the message
+        run: echo "Message: ${{ github.event.inputs.message }}"
