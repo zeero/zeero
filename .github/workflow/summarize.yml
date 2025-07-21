@@ -4,9 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       title:
+        description: 'Title'
         required: false
         default: 'Title'
       message:
+        description: 'Message'
         required: true
         default: 'Message'
 
