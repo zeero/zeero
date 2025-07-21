@@ -22,22 +22,45 @@ jobs:
     steps:
       - name: Run Gemini Message Summary
         uses: google-gemini/gemini-cli-action@main
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
         with:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          settings_json: |
+            {
+              "mcpServers": {
+                "slack": {
+                  "command": "npx",
+                  "args": ["-y", "@modelcontextprotocol/server-slack"],
+                  "env": {
+                    "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
+                    "SLACK_TEAM_ID": "$SLACK_TEAM_ID"
+                  }
+                }
+              },
+              "coreTools": [
+                "mcp__slack__slack_post_message"
+              ]
+            }
           prompt: |
             あなたは要約アシスタントです。
-            以下のメッセージを要約してください。
+            この処理は自動実行しているためユーザへの確認は不要です。
+            以下のメッセージを要約して、Slackの#generalチャンネルに投稿してください。
 
             タイトル: ${{ inputs.title }}
             メッセージ: ${{ inputs.message }}
 
-            以下の形式で出力してください：
-            ## 要約: [タイトル]
+            以下の手順で処理してください：
+            1. メッセージを以下の形式で要約してください：
+               ## 要約: [タイトル]
+               
+               ### 主要なポイント
+               - ポイント1
+               - ポイント2
+               - ポイント3 (必要に応じて)
+               
+               ### 詳細要約
+               [2-3文で内容をまとめた詳細な要約]
             
-            ### 主要なポイント
-            - ポイント1
-            - ポイント2
-            - ポイント3 (必要に応じて)
-            
-            ### 詳細要約
-            [2-3文で内容をまとめた詳細な要約]
+            2. 1で作成した要約を mcp__slack__slack_post_message ツールを使用してSlackの#generalチャンネルに投稿してください。
