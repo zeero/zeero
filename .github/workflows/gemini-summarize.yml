@@ -63,7 +63,7 @@ jobs:
                • <実際のURL|リンクテキスト> - 簡潔な説明  
                • <実際のURL|リンクテキスト> - 簡潔な説明 (必要に応じて)
             
-            2. 1で作成した要約を mcp__slack__slack_post_message ツールを使用してSlackの#generalチャンネルに投稿してください。
+            2. 1で作成した要約を mcp__slack__slack_post_message ツールを使用してSlackの#magazineチャンネルに投稿してください。
             
             注意事項：
             - Slackの絵文字（:memo:など）とマークダウン記法（*太字*など）を使用してください
