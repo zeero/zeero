@@ -100,7 +100,10 @@ jobs:
                 }
               },
               "coreTools": [
-                "mcp__slack__slack_post_message"
+                "mcp__slack__slack_post_message",
+                "read_file",
+                "run_shell_command(cat)",
+                "run_shell_command(ls)"
               ]
             }
           prompt: |
