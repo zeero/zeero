@@ -42,6 +42,14 @@ gh workflow run update-app-store-review-guidelines-gist.yml
 gh workflow run swift-evolution-monitor.yml
 # 特定日付からの監視（手動実行）
 gh workflow run swift-evolution-monitor.yml -f since_date=2025-07-25
+
+# ワークフロー実行状況確認
+gh run list --workflow=swift-evolution-monitor.yml --limit=5
+gh run view <run-id>
+gh run view --log --job=<job-id>
+
+# YAML構文検証
+yamllint .github/workflows/swift-evolution-monitor.yml
 ```
 
 ## アーキテクチャ
@@ -84,6 +92,13 @@ gh workflow run swift-evolution-monitor.yml -f since_date=2025-07-25
 - 日本時間対応: 手動実行時の日付は日本時間として解釈してUTCに変換
 - Accept/Implementedステータスのみ通知、他の変更は除外
 - プロポーザル全文を取得して600字程度で要約
+
+### ワークフロー開発時の注意点
+
+- YAML 内でのスクリプト記述時は、HEREDOCs（`cat <<EOF`）とJSON構造の組み合わせを避ける
+- 複雑な JSON 処理はシェルスクリプトで行い、Gemini には構造化された情報を渡す
+- `yamllint` でYAML構文検証を実行してからコミット
+- MCP ツールの `coreTools` には必要最小限のツールのみ指定（コスト最適化）
 
 ## コミュニケーション
 
