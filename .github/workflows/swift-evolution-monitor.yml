@@ -65,20 +65,47 @@ jobs:
           fi
           rm -f proposals_changes_temp.json
           
-          # 変更があったプロポーザルファイルの内容を取得
-          echo "proposal_contents:" > proposal_contents.txt
+          # Accept/Implement されたプロポーザルを特定
+          echo "[]" > accepted_proposals.json
           
           for filename in $(cat proposals_changes.json | jq -r '.[].filename' | sort -u); do
-            echo "=== $filename ===" >> proposal_contents.txt
-            gh api "repos/swiftlang/swift-evolution/contents/$filename" \
-              --jq '.download_url' | xargs curl -s >> proposal_contents.txt
-            echo "" >> proposal_contents.txt
+            echo "Checking status for: $filename"
+            
+            # プロポーザルファイルの内容を取得
+            CONTENT=$(gh api "repos/swiftlang/swift-evolution/contents/$filename" --jq '.download_url' | xargs curl -s)
+            
+            # ステータスを抽出（Accepted または Implemented のみ）
+            STATUS=$(echo "$CONTENT" | grep -i "^- Status:" | head -1 | sed 's/.*Status:[[:space:]]*//' | sed 's/\*\*//g' | tr -d ' ')
+            
+            if [[ "$STATUS" =~ ^(Accepted|Implemented)$ ]]; then
+              # プロポーザル情報を抽出
+              TITLE=$(echo "$CONTENT" | grep "^#" | head -1 | sed 's/^#[[:space:]]*//')
+              PROPOSAL_NUM=$(echo "$CONTENT" | grep -E "^- Proposal:" | head -1 | sed 's/.*\[\([^]]*\)\].*/\1/')
+              AUTHORS=$(echo "$CONTENT" | grep "^- Authors:" | head -1 | sed 's/^- Authors:[[:space:]]*//')
+              
+              # JSON エントリを作成
+              cat <<EOF >> accepted_proposals_temp.json
+{
+  "filename": "$filename",
+  "status": "$STATUS",
+  "title": "$TITLE",
+  "proposal_number": "$PROPOSAL_NUM",
+  "authors": "$AUTHORS",
+  "content": $(echo "$CONTENT" | jq -Rs .)
+}
+EOF
+              echo "Found $STATUS proposal: $PROPOSAL_NUM - $TITLE"
+            fi
           done
           
-          echo "Changes found:"
-          cat proposals_changes.json
-          echo "Proposal contents:"
-          cat proposal_contents.txt
+          # JSON 配列にまとめる
+          if [ -f accepted_proposals_temp.json ]; then
+            cat accepted_proposals_temp.json | jq -s '.' > accepted_proposals.json
+            rm -f accepted_proposals_temp.json
+          fi
+          
+          echo "Accepted/Implemented proposals found:"
+          cat accepted_proposals.json
 
       - name: Analyze and Notify
         uses: google-gemini/gemini-cli-action@main
@@ -107,62 +134,44 @@ jobs:
               ]
             }
           prompt: |
-            あなたは Swift Evolution の変更監視アシスタントです。
+            あなたは Swift Evolution プロポーザルの要約アシスタントです。
             この処理は定期実行しているためユーザへの確認は不要です。
 
-            前のステップで Swift Evolution リポジトリの変更情報が取得されています。
-            以下のファイルから情報を読み取って分析してください：
+            前のステップで Accept または Implement されたプロポーザルが特定されています。
+            以下のファイルから情報を読み取って、該当プロポーザルの Slack 通知を作成してください：
 
-            ## 1. 取得済み情報の確認
+            ## 1. 対象プロポーザルの確認
 
             ```bash
-            # 変更されたプロポーザルファイルの一覧
-            cat proposals_changes.json
-            
-            # プロポーザルファイルの内容（ヘッダー部分）
-            cat proposal_contents.txt
+            cat accepted_proposals.json
             ```
 
-            ## 2. Accept/Implement ステータス変更の検知
+            ## 2. Slack 通知の作成
 
-            proposal_contents.txt の内容を分析して、以下のステータス変更のみを検知してください：
-            - ステータスが "Accepted" に変更
-            - ステータスが "Implemented" に変更
-
-            各プロポーザルファイルのヘッダー部分から以下を抽出：
-            - プロポーザル番号（SE-NNNN または ST-NNNN）
-            - タイトル（# 行から取得）
-            - ステータス（- Status: の行から取得）
-            - 著者（- Authors: の行から取得）
-
-            ## 3. Accept/Implement 変更時の Slack 通知
-
-            ステータスが "Accepted" または "Implemented" になっているプロポーザルが見つかった場合のみ、
-            Slack の `#general` チャンネルに以下の形式で投稿：
+            accepted_proposals.json に含まれる各プロポーザルについて、
+            Slack の `#general` チャンネルに以下の形式で個別に投稿してください：
 
             ```
             🚀 Swift Evolution Update
 
-            **SE-NNNN: プロポーザルタイトル**
+            **{proposal_number}: {title}**
             📋 Status: **✅ Accepted** または **🛠 Implemented**
-            👤 Author: 著者名
-            🔗 <https://github.com/swiftlang/swift-evolution/blob/main/proposals/FILENAME|詳細を見る>
+            👤 Author: {authors}
+            🔗 <https://github.com/swiftlang/swift-evolution/blob/main/proposals/{filename}|詳細を見る>
 
             📝 **要約:**
-            [プロポーザルの内容を600字程度で要約してください。以下の観点を含めてください：
+            [プロポーザルのcontentフィールドの内容を600字程度で要約してください。以下の観点を含めてください：
             - 何を解決しようとしているのか（Motivation）
             - どのような解決策を提案しているのか（Proposed Solution）
             - Swift 開発者にとってのメリット
             - 具体的な使用例があれば簡潔に紹介]
             ```
 
-            ## 4. 対象外の場合
+            ## 3. 対象外の場合
 
-            Accepted または Implemented 以外のステータスは通知対象外です。
-            対象となる変更がない場合は Slack への投稿は行わず、処理を終了してください。
+            accepted_proposals.json が空配列の場合は、Slack への投稿は行わず処理を終了してください。
 
             ## 注意事項
 
-            - **監視対象**: ステータスの "Accepted" または "Implemented" のみ
-            - 一度に複数の Accept/Implement 変更がある場合は、それぞれ個別に投稿する
-            - proposals_changes.json が空または変更がない場合は何もしない
+            - 複数のプロポーザルがある場合は、それぞれ個別に投稿する
+            - JSON内の情報をそのまま使用し、推測や補完は行わない
