@@ -1,0 +1,163 @@
+name: Swift Evolution Monitor
+
+on:
+  workflow_dispatch:
+    inputs:
+      since_date:
+        description: '監視開始日（YYYY-MM-DD形式、空の場合は1日前から）'
+        required: false
+        default: ''
+        type: string
+  schedule:
+    - cron: '0 6 * * *'  # 毎日日本時間15時（UTC 6時）
+
+jobs:
+  monitor-swift-evolution:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Get Swift Evolution Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # 監視開始日を決定
+          if [ -n "${{ github.event.inputs.since_date }}" ]; then
+            # 入力値のバリデーション（YYYY-MM-DD形式のみ許可）
+            INPUT_DATE="${{ github.event.inputs.since_date }}"
+            if [[ ! "$INPUT_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+              echo "Error: Invalid date format. Use YYYY-MM-DD format."
+              exit 1
+            fi
+            
+            # 手動実行時: 指定された日付を日本時間として扱い、UTC に変換
+            JST_DATE="$INPUT_DATE 00:00:00"
+            SINCE_DATE=$(TZ=Asia/Tokyo date -d "$JST_DATE" -u +"%Y-%m-%dT%H:%M:%SZ")
+            echo "Manual execution: Checking commits since $INPUT_DATE JST ($SINCE_DATE UTC)"
+          else
+            # 自動実行時: 1日前を使用
+            SINCE_DATE=$(date -d "1 day ago" -u +"%Y-%m-%dT%H:%M:%SZ")
+            echo "Scheduled execution: Checking commits since yesterday"
+          fi
+          
+          echo "Checking commits since: $SINCE_DATE"
+          
+          # コミット情報を取得
+          gh api "repos/swiftlang/swift-evolution/commits?since=${SINCE_DATE}" > commits.json
+          
+          # proposals ディレクトリの変更をチェック
+          echo "[]" > proposals_changes.json
+          
+          for sha in $(cat commits.json | jq -r '.[].sha'); do
+            echo "Checking commit: $sha"
+            
+            # このコミットで変更された proposals ファイルを取得
+            gh api "repos/swiftlang/swift-evolution/commits/$sha" \
+              --jq '.files[] | select(.filename | startswith("proposals/"))' \
+              | jq -s '.' >> proposals_changes_temp.json
+          done
+          
+          # 全ての変更を統合
+          cat proposals_changes_temp.json | jq -s 'flatten | unique_by(.filename)' > proposals_changes.json
+          rm -f proposals_changes_temp.json
+          
+          # 変更があったプロポーザルファイルの内容を取得
+          echo "proposal_contents:" > proposal_contents.txt
+          
+          for filename in $(cat proposals_changes.json | jq -r '.[].filename' | sort -u); do
+            echo "=== $filename ===" >> proposal_contents.txt
+            gh api "repos/swiftlang/swift-evolution/contents/$filename" \
+              --jq '.download_url' | xargs curl -s >> proposal_contents.txt
+            echo "" >> proposal_contents.txt
+          done
+          
+          echo "Changes found:"
+          cat proposals_changes.json
+          echo "Proposal contents:"
+          cat proposal_contents.txt
+
+      - name: Analyze and Notify
+        uses: google-gemini/gemini-cli-action@main
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
+        with:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          settings_json: |
+            {
+              "mcpServers": {
+                "slack": {
+                  "command": "npx",
+                  "args": ["-y", "@modelcontextprotocol/server-slack"],
+                  "env": {
+                    "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
+                    "SLACK_TEAM_ID": "$SLACK_TEAM_ID"
+                  }
+                }
+              },
+              "coreTools": [
+                "mcp__slack__slack_post_message"
+              ]
+            }
+          prompt: |
+            あなたは Swift Evolution の変更監視アシスタントです。
+            この処理は定期実行しているためユーザへの確認は不要です。
+
+            前のステップで Swift Evolution リポジトリの変更情報が取得されています。
+            以下のファイルから情報を読み取って分析してください：
+
+            ## 1. 取得済み情報の確認
+
+            ```bash
+            # 変更されたプロポーザルファイルの一覧
+            cat proposals_changes.json
+            
+            # プロポーザルファイルの内容（ヘッダー部分）
+            cat proposal_contents.txt
+            ```
+
+            ## 2. Accept/Implement ステータス変更の検知
+
+            proposal_contents.txt の内容を分析して、以下のステータス変更のみを検知してください：
+            - ステータスが "Accepted" に変更
+            - ステータスが "Implemented" に変更
+
+            各プロポーザルファイルのヘッダー部分から以下を抽出：
+            - プロポーザル番号（SE-NNNN または ST-NNNN）
+            - タイトル（# 行から取得）
+            - ステータス（- Status: の行から取得）
+            - 著者（- Authors: の行から取得）
+
+            ## 3. Accept/Implement 変更時の Slack 通知
+
+            ステータスが "Accepted" または "Implemented" になっているプロポーザルが見つかった場合のみ、
+            Slack の `#general` チャンネルに以下の形式で投稿：
+
+            ```
+            🚀 Swift Evolution Update
+
+            **SE-NNNN: プロポーザルタイトル**
+            📋 Status: **✅ Accepted** または **🛠 Implemented**
+            👤 Author: 著者名
+            🔗 <https://github.com/swiftlang/swift-evolution/blob/main/proposals/FILENAME|詳細を見る>
+
+            📝 **要約:**
+            [プロポーザルの内容を600字程度で要約してください。以下の観点を含めてください：
+            - 何を解決しようとしているのか（Motivation）
+            - どのような解決策を提案しているのか（Proposed Solution）
+            - Swift 開発者にとってのメリット
+            - 具体的な使用例があれば簡潔に紹介]
+            ```
+
+            ## 4. 対象外の場合
+
+            Accepted または Implemented 以外のステータスは通知対象外です。
+            対象となる変更がない場合は Slack への投稿は行わず、処理を終了してください。
+
+            ## 注意事項
+
+            - **監視対象**: ステータスの "Accepted" または "Implemented" のみ
+            - 一度に複数の Accept/Implement 変更がある場合は、それぞれ個別に投稿する
+            - proposals_changes.json が空または変更がない場合は何もしない

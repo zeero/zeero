@@ -22,6 +22,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - Apple ガイドラインの変更を自動検知して Gist を更新
    - 必要なシークレット: `GH_TOKEN`, `GIST_ID`
 
+4. **Swift Evolution Monitor** (`.github/workflows/swift-evolution-monitor.yml`)
+   - Swift Evolution プロポーザルの Accept/Implement 変更を監視
+   - 2段階処理: GitHub API でコミット情報取得 → Gemini で分析・Slack通知
+   - 手動実行時は任意の日付（日本時間）から監視可能
+   - 自動実行: 毎日15時（日本時間）
+   - 必要なシークレット: `SLACK_BOT_TOKEN`, `SLACK_TEAM_ID`, `GEMINI_API_KEY`
+
+5. **その他のワークフロー**
+   - `claude-code-review.yml`, `claude.yml`, `qiita-contribution.yml`, `gemini-summarize.yml`
+
 ### ワークフロー実行方法
 
 ```bash
@@ -29,13 +39,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 gh workflow run gemini-slack-summary.yml
 gh workflow run gemini-bluesky-summary.yml
 gh workflow run update-app-store-review-guidelines-gist.yml
+gh workflow run swift-evolution-monitor.yml
+# 特定日付からの監視（手動実行）
+gh workflow run swift-evolution-monitor.yml -f since_date=2025-07-25
 ```
 
 ## アーキテクチャ
 
 このプロジェクトは以下の2つのアプローチを使用：
 
-1. **Slack 連携ワークフロー** (Slack Summary, Bluesky Summary)
+1. **Slack 連携ワークフロー** (Slack Summary, Bluesky Summary, Swift Evolution Monitor)
    - `google-gemini/gemini-cli-action` を中核として使用
    - MCP (Model Context Protocol) を通じて Slack と連携
    - **Slack サーバー**: `@modelcontextprotocol/server-slack`
@@ -63,6 +76,14 @@ gh workflow run update-app-store-review-guidelines-gist.yml
 - Slack 連携ワークフローでは Gemini API の制限とコスト効率を考慮してプロンプトを最適化
 - MCP サーバーの起動パラメータは settings_json 内で定義
 - App Store Guidelines ワークフローはハッシュ比較による変更検知で API コストを削減
+
+### Swift Evolution Monitor の特殊事項
+
+- 2段階ワークフロー設計: ステップ1でGitHub APIによるデータ取得、ステップ2でGemini分析
+- 入力値バリデーション: `since_date` は YYYY-MM-DD 形式のみ許可（セキュリティ対策）
+- 日本時間対応: 手動実行時の日付は日本時間として解釈してUTCに変換
+- Accept/Implementedステータスのみ通知、他の変更は除外
+- プロポーザル全文を取得して600字程度で要約
 
 ## コミュニケーション
 
