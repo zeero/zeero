@@ -56,11 +56,13 @@ jobs:
             # このコミットで変更された proposals ファイルを取得
             gh api "repos/swiftlang/swift-evolution/commits/$sha" \
               --jq '.files[] | select(.filename | startswith("proposals/"))' \
-              | jq -s '.' >> proposals_changes_temp.json
+              >> proposals_changes_temp.json
           done
           
-          # 全ての変更を統合
-          cat proposals_changes_temp.json | jq -s 'flatten | unique_by(.filename)' > proposals_changes.json
+          # 全ての変更を統合（空ファイル対策も含む）
+          if [ -s proposals_changes_temp.json ]; then
+            cat proposals_changes_temp.json | jq -s 'unique_by(.filename)' > proposals_changes.json
+          fi
           rm -f proposals_changes_temp.json
           
           # 変更があったプロポーザルファイルの内容を取得
