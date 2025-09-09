@@ -9,7 +9,7 @@ on:
         default: ''
         type: string
   schedule:
-    - cron: '0 6 * * *'  # 毎日日本時間15時（UTC 6時）
+    - cron: '0 5 * * *'  # 毎日日本時間14時（UTC 5時）
 
 jobs:
   monitor-swift-evolution:

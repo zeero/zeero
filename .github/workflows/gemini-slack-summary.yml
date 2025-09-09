@@ -3,7 +3,7 @@ name: Gemini Slack Summary
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '0 23 * * *'  # 毎日日本時間8時（UTC 23時）
+    - cron: '0 22 * * *'  # 毎日日本時間7時（UTC 22時）
 
 jobs:
   summarize-slack:
