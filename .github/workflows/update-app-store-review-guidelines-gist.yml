@@ -3,7 +3,7 @@ name: Update App Store Review Guidelines Gist
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 2 * * *'
 
 jobs:
   update:
