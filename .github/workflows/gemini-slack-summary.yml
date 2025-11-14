@@ -33,7 +33,8 @@ jobs:
                 }
               },
               "coreTools": [
-                "mcp__slack__slack_get_channel_history"
+                "mcp__slack__slack_get_channel_history",
+                "mcp__slack__slack_post_message"
               ]
             }
           prompt: |
