@@ -1,1 +1,4 @@
 local
+
+.gemini/
+gha-creds-*.json
