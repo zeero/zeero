@@ -12,14 +12,19 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: ['rss-ios', 'rss-ai', 'rss-hotentry']
     steps:
-      - name: Run Gemini Slack Summary
+      - name: Run Gemini Slack Summary for #${{ matrix.channel }}
         uses: google-github-actions/run-gemini-cli@main
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          upload_artifacts: true
           settings: |
             {
               "mcpServers": {
@@ -40,10 +45,10 @@ jobs:
           prompt: |
             あなたは Slack の要約アシスタントです。
             この処理は定期実行しているためユーザへの確認は不要です。
-            Slackのチャンネル `#rss-ios` `#rss-ai` `rss-hotentry` について、それぞれ以下の処理を繰り返してください。
-            1. まずチャンネル名からチャンネルIDを特定してください。
-            2. 日本時間の昨日の間に投稿されたメッセージを取得してください。
-            3. 見つかった内容を短い要約と重要なトピックの箇条書きでまとめてください。特に重要と思われる記事には100文字程度のサマリをつけてください。
-            4. リンクを含める場合は Slack のリンク形式 `<URL|リンクテキスト>` を使用してください。
-            5. 2でまとめた内容を Slack の `#general` チャンネルに投稿します。
-            6. 次のチャンネルに進みます。
+
+            Slack チャンネル #${{ matrix.channel }} について、以下の処理を実行してください。
+
+            1. 日本時間の昨日の間に投稿されたメッセージを取得してください。
+            2. 見つかった内容を短い要約と重要なトピックの箇条書きでまとめてください。特に重要と思われる記事には100文字程度のサマリをつけてください。
+            3. リンクを含める場合は Slack のリンク形式 `<URL|リンクテキスト>` を使用してください。
+            4. 2でまとめた内容を、「*#${{ matrix.channel }} のサマリ*」というヘッダーを付けて Slack の `#general` チャンネルに投稿してください。
