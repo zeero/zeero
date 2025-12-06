@@ -85,6 +85,8 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
+          SEBOT_BLUESKY_IDENTIFIER: ${{ secrets.SEBOT_BLUESKY_IDENTIFIER }}
+          SEBOT_BLUESKY_PASSWORD: ${{ secrets.SEBOT_BLUESKY_PASSWORD }}
         with:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           settings_json: |
@@ -97,10 +99,19 @@ jobs:
                     "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
                     "SLACK_TEAM_ID": "$SLACK_TEAM_ID"
                   }
+                },
+                "bluesky": {
+                  "command": "npx",
+                  "args": ["-y", "@semihberkay/bluesky-mcp"],
+                  "env": {
+                    "BLUESKY_IDENTIFIER": "$SEBOT_BLUESKY_IDENTIFIER",
+                    "BLUESKY_PASSWORD": "$SEBOT_BLUESKY_PASSWORD"
+                  }
                 }
               },
               "coreTools": [
                 "mcp__slack__slack_post_message",
+                "mcp__bluesky__create_post",
                 "read_file",
                 "run_shell_command(cat)",
                 "run_shell_command(ls)"
@@ -134,10 +145,14 @@ jobs:
             - タイトル（# 行から取得）
             - ステータス（- Status: の行から取得）
             - 著者（- Authors: の行から取得）
+            - ファイル名 (例: 0401-string-catalog.md)
 
-            ## 3. Accept/Implement 変更時の Slack 通知
+            ## 3. Accept/Implement 変更時の通知
 
-            ステータスが "Accepted" または "Implemented" になっているプロポーザルが見つかった場合のみ、
+            ステータスが "Accepted" または "Implemented" になっているプロポーザルが見つかった場合のみ、以下の両方の通知を行ってください。
+
+            ### 3a. Slack 通知
+
             Slack の `#general` チャンネルに以下の形式で投稿：
 
             ```
@@ -159,13 +174,28 @@ jobs:
             [この変更が実際の開発現場でどのように活用され、どのような影響を与えるかの予測を記述してください。例えば、特定のUIパターンの実装が容易になる、ビルド時間が短縮される、コードの可読性が向上するなど、具体的なシナリオを提示してください。]
             ```
 
+            ### 3b. Bluesky 投稿
+
+            Bluesky に以下の形式で投稿。要約は不要で、簡潔にまとめること。
+
+            ```
+            🚀 Swift Evolution Update
+
+            SE-NNNN: プロポーザルタイトル
+            Status: ✅ Accepted (または 🛠 Implemented)
+
+            https://github.com/swiftlang/swift-evolution/blob/main/proposals/FILENAME
+
+            #Swift #SwiftLang
+            ```
+
             ## 4. 対象外の場合
 
             Accepted または Implemented 以外のステータスは通知対象外です。
-            対象となる変更がない場合は Slack への投稿は行わず、処理を終了してください。
+            対象となる変更がない場合は Slack と Bluesky への投稿は行わず、処理を終了してください。
 
             ## 注意事項
 
             - **監視対象**: ステータスの "Accepted" または "Implemented" のみ
-            - 一度に複数の Accept/Implement 変更がある場合は、それぞれ個別に投稿する
+            - 一度に複数の Accept/Implement 変更がある場合は、それぞれ個別に Slack と Bluesky の両方に投稿する
             - proposals_changes.json が空または変更がない場合は何もしない
