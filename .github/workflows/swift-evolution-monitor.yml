@@ -176,15 +176,25 @@ jobs:
 
             ### 3b. Bluesky 投稿
 
-            Bluesky に以下の形式で投稿。要約は不要で、簡潔にまとめること。
+            Bluesky に、Slack と同じ内容を投稿してください。ただしリンクの形式は Markdown ではなく、URL をそのまま記載してください。
 
             ```
             🚀 Swift Evolution Update
 
-            SE-NNNN: プロポーザルタイトル
-            Status: ✅ Accepted (または 🛠 Implemented)
+            **SE-NNNN: プロポーザルタイトル**
+            📋 Status: **✅ Accepted** または **🛠 Implemented**
+            👤 Author: 著者名
+            🔗 https://github.com/swiftlang/swift-evolution/blob/main/proposals/FILENAME
 
-            https://github.com/swiftlang/swift-evolution/blob/main/proposals/FILENAME
+            📝 **要約:**
+            [プロポーザルの内容を600字程度で要約してください。以下の観点を含めてください：
+            - 何を解決しようとしているのか（Motivation）
+            - どのような解決策を提案しているのか（Proposed Solution）
+            - Swift 開発者にとってのメリット
+            - 具体的な使用例があれば簡潔に紹介]
+
+            🤔 **活用の予測:**
+            [この変更が実際の開発現場でどのように活用され、どのような影響を与えるかの予測を記述してください。例えば、特定のUIパターンの実装が容易になる、ビルド時間が短縮される、コードの可読性が向上するなど、具体的なシナリオを提示してください。]
 
             #Swift #SwiftLang
             ```
