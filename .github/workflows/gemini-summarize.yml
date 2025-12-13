@@ -27,6 +27,7 @@ jobs:
           SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          upload_artifacts: true
           settings: |
             {
               "mcpServers": {
