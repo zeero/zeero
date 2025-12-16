@@ -18,6 +18,8 @@ jobs:
       matrix:
         channel: ['rss-ios', 'rss-ai', 'rss-hotentry']
     steps:
+      - name: Wait for 60 seconds
+        run: sleep 60s
       - name: Run Gemini Slack Summary for #${{ matrix.channel }}
         uses: google-github-actions/run-gemini-cli@main
         env:
@@ -54,5 +56,3 @@ jobs:
             2. 見つかった内容を短い要約と重要なトピックの箇条書きでまとめてください。特に重要と思われる記事には100文字程度のサマリをつけてください。
             3. リンクを含める場合は Slack のリンク形式 `<URL|リンクテキスト>` を使用してください。
             4. 2でまとめた内容を、「*#${{ matrix.channel }} のサマリ*」というヘッダーを付けて Slack の `#general` チャンネルに投稿してください。
-      - name: Wait for 120 seconds
-        run: sleep 120s
