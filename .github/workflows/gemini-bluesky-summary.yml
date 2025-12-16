@@ -74,3 +74,9 @@ jobs:
                - <ユーザ名|メッセージへのリンクURL> メッセージの投稿時間 👍いいね数
                  - Slackのリンク形式にしてください
             4. 2のサマリと3の結果を Slack の `#general` チャンネルに投稿します。
+      - name: Upload Gemini Error Log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gemini-error-log
+          path: /tmp/gemini-client-error-*.json
