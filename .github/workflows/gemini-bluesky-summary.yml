@@ -37,6 +37,7 @@ jobs:
           BLSKY_MCP_PATH: ${{ env.BLSKY_MCP_PATH }}
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: "gemini-2.5-flash"
           upload_artifacts: true
           settings: |
             {

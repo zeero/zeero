@@ -25,8 +25,8 @@ jobs:
           SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: "gemini-2.5-flash"
           upload_artifacts: true
-          artifact_name: gemini-summary-${{ matrix.channel }}
           settings: |
             {
               "mcpServers": {
