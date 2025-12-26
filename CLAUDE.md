@@ -57,7 +57,7 @@ yamllint .github/workflows/swift-evolution-monitor.yml
 このプロジェクトは以下の2つのアプローチを使用：
 
 1. **Slack 連携ワークフロー** (Slack Summary, Bluesky Summary, Swift Evolution Monitor)
-   - `google-gemini/gemini-cli-action` を中核として使用
+   - `google-github-actions/run-gemini-cli` を中核として使用
    - MCP (Model Context Protocol) を通じて Slack と連携
    - **Slack サーバー**: `@modelcontextprotocol/server-slack`
 

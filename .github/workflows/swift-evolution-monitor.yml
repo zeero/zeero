@@ -81,7 +81,7 @@ jobs:
           cat proposal_contents.txt
 
       - name: Analyze and Notify
-        uses: google-gemini/gemini-cli-action@main
+        uses: google-github-actions/run-gemini-cli@main
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
