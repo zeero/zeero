@@ -57,12 +57,68 @@ jobs:
         if: env.GUIDELINES_CHANGED == 'true'
         run: echo "${{ secrets.GH_TOKEN }}" | gh auth login --with-token
 
+      - name: Fetch previous guidelines from Gist
+        if: env.GUIDELINES_CHANGED == 'true'
+        env:
+          GIST_ID: ${{ secrets.GIST_ID }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: gh gist view "$GIST_ID" -f guidelines.md > previous_guidelines.md || touch previous_guidelines.md
+
       - name: Update gist
         if: env.GUIDELINES_CHANGED == 'true'
         env:
           GIST_ID: ${{ secrets.GIST_ID }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: gh gist edit "$GIST_ID" guidelines.md
+
+      - name: Generate diff
+        if: env.GUIDELINES_CHANGED == 'true'
+        run: diff -u previous_guidelines.md guidelines.md > guidelines.diff || true
+
+      - name: Analyze and Notify
+        if: env.GUIDELINES_CHANGED == 'true'
+        uses: google-github-actions/run-gemini-cli@main
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
+        with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: "gemini-1.5-flash"
+          upload_artifacts: true
+          settings_json: |
+            {
+              "mcpServers": {
+                "slack": {
+                  "command": "npx",
+                  "args": ["-y", "@modelcontextprotocol/server-slack"],
+                  "env": {
+                    "SLACK_BOT_TOKEN": "$SLACK_BOT_TOKEN",
+                    "SLACK_TEAM_ID": "$SLACK_TEAM_ID"
+                  }
+                }
+              },
+              "coreTools": [
+                "mcp__slack__slack_post_message",
+                "read_file"
+              ]
+            }
+          prompt: |
+            あなたは App Store Review Guidelines の更新を監視するアシスタントです。
+            Apple のガイドラインが更新されました。
+
+            以下の diff ファイルと新しいガイドラインの内容を分析して、変更内容を日本語で要約し、Slack の `#general` チャンネルに投稿してください。
+
+            - guidelines.diff (変更点)
+            - guidelines.md (新しい内容)
+
+            通知の形式：
+            🚀 **App Store Review Guidelines が更新されました**
+
+            📝 **変更の要約:**
+            [変更点を箇条書きで分かりやすく記述してください。どのような影響があるかも含めてください。]
+
+            🔗 <https://developer.apple.com/app-store/review/guidelines/|ガイドライン原文>
+            🔗 <https://gist.github.com/${{ secrets.GIST_ID }}|Gist で差分を確認>
 
       - name: Save current hash for next run
         if: env.GUIDELINES_CHANGED == 'true'
