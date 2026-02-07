@@ -64,6 +64,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: gh gist edit "$GIST_ID" guidelines.md
 
+      - name: Notify Slack
+        if: env.GUIDELINES_CHANGED == 'true'
+        run: |
+          MESSAGE="🚀 *App Store Review Guidelines が更新されました*\n\n🔗 <https://developer.apple.com/app-store/review/guidelines/|ガイドライン原文>\n🔗 <https://gist.github.com/${{ secrets.GIST_ID }}|Gist で差分を確認>"
+          curl -X POST https://slack.com/api/chat.postMessage \
+            -H "Authorization: Bearer ${{ secrets.SLACK_BOT_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"channel\":\"#general\",\"text\":\"$MESSAGE\"}"
+
       - name: Save current hash for next run
         if: env.GUIDELINES_CHANGED == 'true'
         run: cp current-hash.txt previous-hash.txt
