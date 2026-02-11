@@ -20,18 +20,17 @@ jobs:
       - name: Fetch current guidelines
         run: curl -L https://developer.apple.com/app-store/review/guidelines/ -o guidelines.html
 
-      - name: Extract Last Updated date
+      - name: Extract Last Updated line
         run: |
-          # HTMLから "Last Updated:" の後の日付を抽出
-          CURRENT_DATE=$(grep -oP 'Last Updated:\s*\K[A-Za-z]+ \d{1,2}, \d{4}' guidelines.html || echo "")
+          # HTMLから "Last Updated:" を含む行全体を抽出
+          CURRENT_DATE=$(grep "Last Updated:" guidelines.html || echo "")
           if [ -z "$CURRENT_DATE" ]; then
-            echo "Error: Could not extract 'Last Updated' date from HTML"
-            cat guidelines.html | grep -i "last updated" || echo "No 'Last Updated' text found"
+            echo "Error: Could not find 'Last Updated' line in HTML"
             exit 1
           fi
           echo "$CURRENT_DATE" > current-date.txt
           echo "CURRENT_DATE=$CURRENT_DATE" >> $GITHUB_ENV
-          echo "Current Last Updated: $CURRENT_DATE"
+          echo "Current Last Updated line: $CURRENT_DATE"
 
       - name: Check if guidelines changed
         run: |
