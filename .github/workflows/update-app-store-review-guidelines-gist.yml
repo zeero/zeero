@@ -9,38 +9,46 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - name: Restore previous hash from cache
+      - name: Restore previous date from cache
         uses: actions/cache@v4
         with:
-          path: previous-hash.txt
-          key: guidelines-hash-${{ github.run_id }}
+          path: previous-date.txt
+          key: guidelines-date-${{ github.run_id }}
           restore-keys: |
-            guidelines-hash-
+            guidelines-date-
 
       - name: Fetch current guidelines
         run: curl -L https://developer.apple.com/app-store/review/guidelines/ -o guidelines.html
 
-      - name: Calculate current hash
+      - name: Extract Last Updated date
         run: |
-          sha256sum guidelines.html | cut -d' ' -f1 > current-hash.txt
-          echo "CURRENT_HASH=$(cat current-hash.txt)" >> $GITHUB_ENV
+          # HTMLから "Last Updated:" の後の日付を抽出
+          CURRENT_DATE=$(grep -oP 'Last Updated:\s*\K[A-Za-z]+ \d{1,2}, \d{4}' guidelines.html || echo "")
+          if [ -z "$CURRENT_DATE" ]; then
+            echo "Error: Could not extract 'Last Updated' date from HTML"
+            cat guidelines.html | grep -i "last updated" || echo "No 'Last Updated' text found"
+            exit 1
+          fi
+          echo "$CURRENT_DATE" > current-date.txt
+          echo "CURRENT_DATE=$CURRENT_DATE" >> $GITHUB_ENV
+          echo "Current Last Updated: $CURRENT_DATE"
 
       - name: Check if guidelines changed
         run: |
-          if [ -f previous-hash.txt ]; then
-            PREVIOUS_HASH=$(cat previous-hash.txt)
-            echo "Previous hash: $PREVIOUS_HASH"
-            echo "Current hash: ${{ env.CURRENT_HASH }}"
-            if [ "$PREVIOUS_HASH" != "${{ env.CURRENT_HASH }}" ]; then
+          if [ -f previous-date.txt ]; then
+            PREVIOUS_DATE=$(cat previous-date.txt)
+            echo "Previous Last Updated: $PREVIOUS_DATE"
+            echo "Current Last Updated: ${{ env.CURRENT_DATE }}"
+            if [ "$PREVIOUS_DATE" != "${{ env.CURRENT_DATE }}" ]; then
               echo "GUIDELINES_CHANGED=true" >> $GITHUB_ENV
               echo "Guidelines have changed!"
             else
               echo "GUIDELINES_CHANGED=false" >> $GITHUB_ENV
-              echo "No changes detected."
+              echo "No changes detected (same Last Updated date)."
             fi
           else
             echo "GUIDELINES_CHANGED=true" >> $GITHUB_ENV
-            echo "No previous hash found. Treating as new guidelines."
+            echo "No previous date found. Treating as new guidelines."
           fi
 
       - name: Install pandoc and GitHub CLI
@@ -73,9 +81,9 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"channel\":\"#general\",\"text\":\"$MESSAGE\"}"
 
-      - name: Save current hash for next run
+      - name: Save current date for next run
         if: env.GUIDELINES_CHANGED == 'true'
-        run: cp current-hash.txt previous-hash.txt
+        run: cp current-date.txt previous-date.txt
 
       - name: No update needed
         if: env.GUIDELINES_CHANGED != 'true'
