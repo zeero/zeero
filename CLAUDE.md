@@ -26,7 +26,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - Swift Evolution プロポーザルの Accept/Implement 変更を監視
    - 2段階処理: GitHub API でコミット情報取得 → Gemini で分析・Slack通知
    - 手動実行時は任意の日付（日本時間）から監視可能
-   - 自動実行: 毎日15時（日本時間）
    - 必要なシークレット: `SLACK_BOT_TOKEN`, `SLACK_TEAM_ID`, `GEMINI_API_KEY`
 
 5. **その他のワークフロー**
