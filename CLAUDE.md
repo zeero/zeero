@@ -104,3 +104,4 @@ yamllint .github/workflows/swift-evolution-monitor.yml
 - 受け答えは日本語で行う
   - 途中の思考は英語でもOK
 - 各文の末尾に感情を表す絵文字をつけてください
+- ネクストアクション以外の選択肢は数字連番で提示してください
