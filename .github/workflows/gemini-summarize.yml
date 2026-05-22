@@ -33,7 +33,7 @@ jobs:
       - name: Run model without thinking
         id: answer
         run: |
-          RESPONSE=$(ollama run gemma4-e4b --nothink "$(cat <<'EOF'
+          RESPONSE=$(ollama run gemma4-e4b --think=false "$(cat <<'EOF'
 
           あなたは要約アシスタントです。
           この処理は自動実行しているためユーザへの確認は不要です。
