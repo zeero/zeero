@@ -33,7 +33,7 @@ jobs:
       - name: Run model without thinking
         id: answer
         run: |
-          RESPONSE=$(ollama run gemma4-e4b --think=false "$(cat <<'EOF'
+          RESPONSE=$(ollama run gemma4:e4b "$(cat <<'EOF'
 
           あなたは要約アシスタントです。
           この処理は自動実行しているためユーザへの確認は不要です。
@@ -63,7 +63,7 @@ jobs:
           - 見やすさを重視し、適切な改行と区切り線を使用してください
 
           EOF
-          )")
+          )" --think=false)
           echo "response=$RESPONSE" >> $GITHUB_OUTPUT
 
       - name: Post to Slack
