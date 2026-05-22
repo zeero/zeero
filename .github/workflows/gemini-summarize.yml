@@ -25,7 +25,7 @@ jobs:
         uses: ai-action/ollama-action@v2
         id: ollama
         with:
-          model: llama3.2
+          model: gemma4:e4b
           prompt: |
             あなたは要約アシスタントです。
             この処理は自動実行しているためユーザへの確認は不要です。
